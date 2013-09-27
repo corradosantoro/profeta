@@ -28,4 +28,8 @@ class PROFETA:
     def event(cls, evt):
         cls.__engine.generate_external_event(evt)
 
+    @classmethod
+    def add_sensor(cls, sensor):
+        cls.__engine.add_event_poller(sensor)
+
 

@@ -4,9 +4,11 @@
 lib.py
 """
 
+import threading
+
 from profeta.attitude import *
 from profeta.inference import *
-
+from profeta.main import *
 
 class start(Reactor):
     pass
@@ -86,5 +88,87 @@ class RepetitivePoller(OneShotPoller):
 
     def __init__ (self):
         OneShotPoller.__init__ (self, True)
+
+
+# ------------------------------------------------------------------------------
+class Sensor:
+
+    def __init__(self):
+        self.__is_on = None
+
+    def on(self):
+        if self.__is_on is not None:
+            self.__is_on = True
+            self.resume()
+        else:
+            self.__is_on = True
+
+    def off(self):
+        if self.__is_on is not None:
+            self.__is_on = False
+            self.suspend()
+
+    def is_on(self):
+        return self.__is_on
+
+    def prepare(self):
+        self.start()
+
+    def poll(self):
+        return self.sense()
+
+    def start(self):
+        pass
+
+    def sense(self):
+        raise "Not implemented"
+
+    def suspend(self):
+        pass
+
+    def resume(self):
+        pass
+
+# ------------------------------------------------------------------------------
+class SynchSensor(Sensor):
+
+    def __init__(self):
+        Sensor.__init__(self)
+
+# ------------------------------------------------------------------------------
+class ASynchSensor(Sensor, threading.Thread):
+
+    def __init__(self, uPeriodMS = 100):
+        self.__period = uPeriodMS / 1000.0
+        self.__last_data = None
+        self.__lock = threading.Lock()
+        Sensor.__init__(self)
+        threading.Thread.__init__(self)
+
+    def prepare(self):
+        Sensor.prepare(self)
+        threading.Thread.start(self)
+        self.setDaemon(True)
+
+    def poll(self):
+        if self.is_on():
+            try:
+                self.__lock.acquire()
+                return self.__last_data
+            finally:
+                self.__lock.release()
+        else:
+            return None
+
+    def run(self):
+        while True:
+            if self.is_on():
+                data = self.sense()
+                if data is not None:
+                    self.__lock.acquire()
+                    self.__last_data = data
+                    self.__lock.release()
+            time.sleep(self.__period)
+
 
 
