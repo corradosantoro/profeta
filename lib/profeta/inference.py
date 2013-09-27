@@ -222,8 +222,11 @@ class Engine(object):
             print trigger, "|" , condition
             print "    >> "
             print "     ["
-            for item in body:
-                print "       ", item
+            if type(body) != types.ListType:
+                print "     ", body
+            else:
+                for item in body:
+                    print "       ", item
             print "     ]"
             self.clear_context()
             print ""

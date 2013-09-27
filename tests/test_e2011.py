@@ -11,7 +11,7 @@ from profeta.attitude  import *
 from profeta.inference  import *
 from profeta.action  import *
 from profeta.lib  import *
-from profeta.threaded_engine_executor import *
+from profeta.main import *
 
 _ = v
 
@@ -177,16 +177,13 @@ def strategy():
 
 if __name__ == "__main__":
 
-    CreateEngine()
-    Engine.instance().set_debug (False)
-    ex = ThreadedEngineExecutor (Engine.instance())
-    ex.start ()
+    PROFETA.start()
 
     strategy()
 
     while True:
         print "\nNew KB is : ", Engine.kb()
         e = input ("Belief: ")
-        Engine.instance().generate_external_event ( +e )
+        PROFETA.event ( +e )
         time.sleep (1)
 
