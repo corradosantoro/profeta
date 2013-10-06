@@ -65,7 +65,7 @@ class ThreadedEngineExecutor(AbstractEngineExecutor,threading.Thread):
     def put_top_event (self, uEvent):
         self.__channel.put ( (uEvent, VersatileQueue.TOP_PUT) )
 
-    def   run (self):
+    def run (self):
         if PROFETA_LOGGING_ON:
             self.__logger.info("Threaded Engine Executor started")
 
@@ -84,28 +84,30 @@ class ThreadedEngineExecutor(AbstractEngineExecutor,threading.Thread):
                 continue
             else :
                 #print "\nWaiting for an event ..."
-                if event_pollers == []:
-                    event = self.__channel.get ()
-                else:
+                if self.__channel.empty():
                     for poller in event_pollers:
-                        poller.poll()
-                    if self.__channel.empty():
-                        time.sleep(self.engine.get_scheduler_tick())
-                        continue
-                    else:
-                        event = self.__channel.get ()
+                        event = poller.poll()
+                        if event is not None:
+                            #self.put_event(event)
+                            self.engine.generate_external_event(+event)
+
+                if self.__channel.empty():
+                    time.sleep(self.engine.get_scheduler_tick())
+                    continue
+                else:
+                    event = self.__channel.get ()
 
                 #print "Processing:  ", event
 
             # determine the relevant plans
             relevant_plans =  self.engine.process_event (event)
-            # print event, relevant_plans
+            #print event, relevant_plans
             #self.engine.print_plans(relevant_plans, " Relevant Plans: ")
 
             # if there are relevant plans, determine which of them are applicable
             if len(relevant_plans) is not 0:
                 applicable_plans = self.engine.evaluate_condition(relevant_plans)
-                # print "applicable", applicable_plans
+                #print "applicable", applicable_plans
             # else, execute the next intention
             else:
                 self.engine.execute_intentions()

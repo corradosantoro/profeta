@@ -136,40 +136,50 @@ class save_queen_position(Action):
 def strategy():
 
 
-    goal("main")
-    +start() >> [ start_goal("exit_from_area") ]
+    declare_episode("main")
+    +start() >> [ start_episode("exit_from_area") ]
 
 
-    goal("exit_from_area")
+    declare_episode("exit_from_area")
     +start() / color("C") >> [ exit_from_area_path("C") ]
     +target_got() / color("red") >> [ activate_right_arm_automation(),
                                       activate_left_scanner(),
-                                      start_goal("first_row") ]
+                                      start_episode("first_row") ]
     +target_got() / color("blue") >> [ activate_left_arm_automation(),
                                        activate_right_scanner(),
-                                       start_goal("first_row") ]
+                                       start_episode("first_row") ]
 
 
-    goal("first_row")
+    declare_episode("first_row")
     +start() / color("C") >> [ first_row_path("C") ]
     +king_got()   >> [ save_king_position() ]
     +queen_got()  >> [ save_queen_position () ]
-    +target_got() >> [ start_goal("from_first_to_second_row") ]
+    +target_got() >> [ start_episode("from_first_to_second_row") ]
 
 
-    goal("from_first_to_second_row")
+    declare_episode("from_first_to_second_row")
     +start() / color("C") >> [ stop_scanner(),
                                from_first_to_second_row_path("C") ]
     +target_got() / color("red") >> [ activate_left_arm_automation(),
-                                      start_goal("second_row") ]
+                                      start_episode("second_row") ]
     +target_got() / color("blue") >> [ activate_right_arm_automation(),
-                                       start_goal("second_row") ]
+                                       start_episode("second_row") ]
 
 
-    goal("second_row")
+    declare_episode("second_row")
     +start() / color("C") >> [ second_row_path("C") ]
     +target_got() >> [ show("###END###") ]
 
+
+class KB(Sensor):
+
+    def start(self):
+        self.on()
+
+    def sense(self):
+        print "\nNew KB is : ", PROFETA.kb()
+        e = input ("Belief: ")
+        return e
 
 
 
@@ -178,12 +188,11 @@ def strategy():
 if __name__ == "__main__":
 
     PROFETA.start()
+    PROFETA.add_sensor(KB())
+    PROFETA.assert_belief(color('red'))
+    PROFETA.set_current_episode('main')
 
     strategy()
 
-    while True:
-        print "\nNew KB is : ", Engine.kb()
-        e = input ("Belief: ")
-        PROFETA.event ( +e )
-        time.sleep (1)
+    PROFETA.run()
 

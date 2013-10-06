@@ -22,8 +22,8 @@ start_event = +start()
 def declare_episode(uEpisodeName):
     Engine.instance().set_declared_episode(uEpisodeName)
 
-def goal(uGoalName):
-    declare_episode(uGoalName)
+#def goal(uGoalName):
+#    declare_episode(uGoalName)
 
 # ------------------------------------------------------------------------------
 class start_episode(Action):
@@ -38,8 +38,8 @@ class start_episode(Action):
 
 
 # ------------------------------------------------------------------------------
-class start_goal(start_episode):
-    pass
+#class start_goal(start_episode):
+#    pass
 
 
 # ------------------------------------------------------------------------------
@@ -115,7 +115,10 @@ class Sensor:
         self.start()
 
     def poll(self):
-        return self.sense()
+        if self.is_on():
+            return self.sense()
+        else:
+            return None
 
     def start(self):
         pass

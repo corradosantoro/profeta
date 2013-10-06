@@ -199,6 +199,7 @@ class Engine(object):
         self.__current_episode = uEpisodeName
 
     def add_event_poller (self, uEventPoller):
+        uEventPoller.start()
         self.__event_pollers.append (uEventPoller)
 
     def get_pollers (self):
