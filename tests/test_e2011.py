@@ -136,37 +136,37 @@ class save_queen_position(Action):
 def strategy():
 
 
-    declare_episode("main")
-    +start() >> [ start_episode("exit_from_area") ]
+    context("main")
+    +start() >> [ set_context("exit_from_area") ]
 
 
-    declare_episode("exit_from_area")
+    context("exit_from_area")
     +start() / color("C") >> [ exit_from_area_path("C") ]
     +target_got() / color("red") >> [ activate_right_arm_automation(),
                                       activate_left_scanner(),
-                                      start_episode("first_row") ]
+                                      set_context("first_row") ]
     +target_got() / color("blue") >> [ activate_left_arm_automation(),
                                        activate_right_scanner(),
-                                       start_episode("first_row") ]
+                                       set_context("first_row") ]
 
 
-    declare_episode("first_row")
+    context("first_row")
     +start() / color("C") >> [ first_row_path("C") ]
     +king_got()   >> [ save_king_position() ]
     +queen_got()  >> [ save_queen_position () ]
-    +target_got() >> [ start_episode("from_first_to_second_row") ]
+    +target_got() >> [ set_context("from_first_to_second_row") ]
 
 
-    declare_episode("from_first_to_second_row")
+    context("from_first_to_second_row")
     +start() / color("C") >> [ stop_scanner(),
                                from_first_to_second_row_path("C") ]
     +target_got() / color("red") >> [ activate_left_arm_automation(),
-                                      start_episode("second_row") ]
+                                      set_context("second_row") ]
     +target_got() / color("blue") >> [ activate_right_arm_automation(),
-                                       start_episode("second_row") ]
+                                       set_context("second_row") ]
 
 
-    declare_episode("second_row")
+    context("second_row")
     +start() / color("C") >> [ second_row_path("C") ]
     +target_got() >> [ show("###END###") ]
 

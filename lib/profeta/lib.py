@@ -22,8 +22,8 @@ start_event = +start()
 def declare_episode(uEpisodeName):
     Engine.instance().set_declared_episode(uEpisodeName)
 
-#def goal(uGoalName):
-#    declare_episode(uGoalName)
+def context(uGoalName):
+    declare_episode(uGoalName)
 
 # ------------------------------------------------------------------------------
 class start_episode(Action):
@@ -38,8 +38,8 @@ class start_episode(Action):
 
 
 # ------------------------------------------------------------------------------
-#class start_goal(start_episode):
-#    pass
+class set_context(start_episode):
+    pass
 
 
 # ------------------------------------------------------------------------------
