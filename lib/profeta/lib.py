@@ -159,6 +159,7 @@ class ASynchSensor(Sensor, threading.Thread):
                 self.__lock.acquire()
                 return self.__last_data
             finally:
+                self.__last_data = None
                 self.__lock.release()
         else:
             return None
