@@ -112,6 +112,7 @@ class Sensor:
         return self.__is_on
 
     def prepare(self):
+        self.on()
         self.start()
 
     def poll(self):
@@ -121,7 +122,7 @@ class Sensor:
             return None
 
     def start(self):
-        self.on()
+        pass
 
     def sense(self):
         raise "Not implemented"
@@ -131,48 +132,5 @@ class Sensor:
 
     def resume(self):
         pass
-
-# ------------------------------------------------------------------------------
-class SynchSensor(Sensor):
-
-    def __init__(self):
-        Sensor.__init__(self)
-
-# ------------------------------------------------------------------------------
-class ASynchSensor(Sensor, threading.Thread):
-
-    def __init__(self, uPeriodMS = 100):
-        self.__period = uPeriodMS / 1000.0
-        self.__last_data = None
-        self.__lock = threading.Lock()
-        Sensor.__init__(self)
-        threading.Thread.__init__(self)
-
-    def prepare(self):
-        Sensor.prepare(self)
-        threading.Thread.start(self)
-        self.setDaemon(True)
-
-    def poll(self):
-        if self.is_on():
-            try:
-                self.__lock.acquire()
-                return self.__last_data
-            finally:
-                self.__last_data = None
-                self.__lock.release()
-        else:
-            return None
-
-    def run(self):
-        while True:
-            if self.is_on():
-                data = self.sense()
-                if data is not None:
-                    self.__lock.acquire()
-                    self.__last_data = data
-                    self.__lock.release()
-            time.sleep(self.__period)
-
 
 
