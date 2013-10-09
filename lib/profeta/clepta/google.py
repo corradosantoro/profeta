@@ -44,8 +44,5 @@ class say(AsyncAction):
     def execute(self):
         utterance = ""
         for i in range(0,self.items()):
-            v = self[i]
-            if isinstance(v, Variable):
-                v = v.get()
-            utterance = utterance + v
+            utterance = utterance + self[i]
         self.async_invoke(self.get_service().say, [utterance])

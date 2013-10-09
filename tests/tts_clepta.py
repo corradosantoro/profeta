@@ -36,11 +36,7 @@ class phrase(Belief):
 class show(Action):
 
     def execute(self):
-        __str = self[0]
-        if isinstance(__str, Variable):
-            print __str.get()
-        else:
-            print __str
+        print self[0]
 
 # ------------------------------------------------------------------------------
 # }}}

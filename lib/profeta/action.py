@@ -6,6 +6,7 @@ action.py
 
 import logging
 
+from profeta.variable import *
 from profeta.inference import *
 
 class Action:
@@ -20,7 +21,11 @@ class Action:
         self.init()
 
     def __getitem__ (self, uIndex):
-        return self._terms[uIndex]
+        v = self._terms[uIndex]
+        if isinstance(v, Variable):
+            return v.get()
+        else:
+            return v
 
     def items(self):
         return len(self._terms)
