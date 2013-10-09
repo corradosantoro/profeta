@@ -5,14 +5,12 @@ action.py
 """
 
 import logging
-import threading
 
 from profeta.inference import *
 
-class Action(threading.Thread):
+class Action:
 
     def __init__(self, *args, **kwargs):
-        threading.Thread.__init__ (self)
 #        logging.config.fileConfig("utils/logger_config.ini")
         self._logger = logging.getLogger("engine.Action")
         self._terms = make_terms(args)
@@ -23,6 +21,9 @@ class Action(threading.Thread):
 
     def __getitem__ (self, uIndex):
         return self._terms[uIndex]
+
+    def items(self):
+        return len(self._terms)
 
     def __repr__ (self):
         if len(self._terms) is not 0:

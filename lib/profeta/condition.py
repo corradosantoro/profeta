@@ -4,7 +4,7 @@
 condition.py
 """
 
-from inference import Engine
+from profeta.inference import *
 
 import copy
 import types

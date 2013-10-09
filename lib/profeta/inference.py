@@ -10,13 +10,13 @@ import types
 import random
 import logging
 
-from exception import *
+from profeta.exception import *
 #import logger
 
-from variable import *
-from action import Action
-from profeta_globals import *
-from attitude import *
+from profeta.variable import *
+from profeta.action import *
+from profeta.profeta_globals import *
+from profeta.attitude import *
 
 class KnowledgeBase(object):
 

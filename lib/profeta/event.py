@@ -5,7 +5,7 @@ event.py
 """
 
 import copy
-from inference import Engine
+from profeta.inference import *
 
 
 class Event(object):

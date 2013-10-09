@@ -121,7 +121,7 @@ class Sensor:
             return None
 
     def start(self):
-        pass
+        self.on()
 
     def sense(self):
         raise "Not implemented"
