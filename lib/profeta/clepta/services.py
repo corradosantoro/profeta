@@ -39,8 +39,11 @@ class HttpService(Service):
         if (d is not None)and(self.__method == 'GET'):
             raise 'Data must be handled by POST instead of GET'
 
-        req = urllib2.Request(self.__url, data=d, headers=hdr)
-        p = urllib2.urlopen(req)
-
-        return p
+        try:
+            req = urllib2.Request(self.__url, data=d, headers=hdr)
+            p = urllib2.urlopen(req)
+            return p
+        except urllib2.HTTPError as e:
+            print "HTTPError " + e.strerror
+            return None
 

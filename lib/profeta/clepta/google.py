@@ -112,7 +112,7 @@ class Hearer(Sensor):
             if silence:
                 self.__capture_on = False
                 # perform translation
-                print "Stop capturing"
+                #print "Stop capturing"
                 ret_val = self.__do_stt()
                 self.__audio_buffer = []
                 self.__queue.clear()
@@ -120,7 +120,7 @@ class Hearer(Sensor):
                 self.__audio_buffer.append(data)
         else:
             if not(silence):
-                print "Start capturing..."
+                #print "Start capturing..."
                 self.__capture_on = True
                 self.__audio_buffer.append(data)
 
@@ -141,6 +141,9 @@ class Hearer(Sensor):
         f = open(Hearer.FILENAME + '.flac','rb')
         flac_cont = f.read()
         f.close()
+
+        os.remove(Hearer.FILENAME + '.wav')
+        os.remove(Hearer.FILENAME + '.flac')
 
         e = self.__stt.get(flac_cont)
         if e == []:

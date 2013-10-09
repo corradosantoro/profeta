@@ -30,8 +30,13 @@ class show(Action):
 
 
 def strategy():
-    +start() >> [ show("ciao!"), say("ciao, dimmi qualcosa")  ]
-    +hear("X") >> [ show("X"), say("hai detto"), say("X"), -hear("X") ]
+    +start() >> [ show("ciao!"), say("ciao")  ]
+    +hear("ciao") >> [ say("ciao anche a te!"), -hear("ciao") ]
+    +hear("come stai") >> [ say("abbastanza bene, e tu?"), -hear("come stai") ]
+    +hear("ottimamente") >> [ say("bene, sono contenta per te"), -hear("ottimamente") ]
+    +hear("bene") >> [ say("sono contenta per te"), -hear("bene") ]
+    +hear("benissimo") >> [ say("bene, sono contenta per te"), -hear("benissimo") ]
+    #+hear("X") >> [ show("X"), say("non credo di avere capito"), -hear("X") ]
 
 
 
@@ -42,7 +47,7 @@ if __name__ == "__main__":
     PROFETA.start()
     PROFETA.assert_belief(start())
 
-    h = Hearer(threshold=240)
+    h = Hearer(threshold=3000)
     sp = AsyncSensorProxy(h)
     PROFETA.add_sensor(sp)
 
