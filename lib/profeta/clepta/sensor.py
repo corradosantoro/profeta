@@ -8,14 +8,18 @@ import Queue
 from profeta.lib import *
 
 
-class AsyncSensorProxy(Sensor, threading.Thread):
+class AsyncSensorProxy(Sensor):
 
     def __init__(self, uSyncSensor):
         Sensor.__init__(self)
-        threading.Thread.__init__(self)
         self.__sensor = uSyncSensor
         self.__queue = Queue.Queue(1)
-        self.start()
+        self.__thread = threading.Thread(target = self.run)
+
+    # PROFETA context
+    def start(self):
+        self.__sensor.start()
+        self.__thread.start()
 
     def sense(self):
         try:
@@ -24,10 +28,11 @@ class AsyncSensorProxy(Sensor, threading.Thread):
         except Queue.Empty:
             return None
 
-    # thread context
+    # sensor context
     def run(self):
         while True:
             e = self.__sensor.sense()
+            #print e
             if e is not None:
                 self.__queue.put(e)
 
