@@ -74,15 +74,14 @@ class Hearer(Sensor):
     FILENAME = 'temp_in'
     FLAC_CONV = 'flac --totally-silent -f ' # We need a WAV to FLAC converter.
 
-    def __init__(self, threshold = 100):
+    def __init__(self, threshold = 100, lang = 'en-US'):
         Sensor.__init__(self)
         self.__threshold = threshold
-
-    def set_language(self, uLang):
-        self.__stt.set_language(uLang)
+        self.__lang = lang
 
     def start(self):
         self.__stt = GoogleSpeechToText('en-US')
+        self.__stt.set_language(self.__lang)
         self.__audio = pyaudio.PyAudio()
 
         self.__stream = self.__audio.open(format = pyaudio.paInt16,

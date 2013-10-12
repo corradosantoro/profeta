@@ -47,12 +47,7 @@ if __name__ == "__main__":
     PROFETA.start()
     PROFETA.assert_belief(start())
 
-    h = Hearer(threshold=3000)
-    sp = AsyncSensorProxy(h)
-    PROFETA.add_sensor(sp)
-
-    h.set_language('it')
-
+    PROFETA.add_sensor(AsyncSensorProxy(Hearer(threshold=3000, lang='it')))
 
     say().set_language('it')
 
