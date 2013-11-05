@@ -32,6 +32,7 @@ class show(Action):
 def strategy():
     +start() >> [ show("ciao!"), say("ciao")  ]
     +hear("ciao") >> [ say("ciao anche a te!"), -hear("ciao") ]
+    +hear("ciao come stai") >> [ say("abbastanza bene, e tu?"), -hear("come stai") ]
     +hear("come stai") >> [ say("abbastanza bene, e tu?"), -hear("come stai") ]
     +hear("ottimamente") >> [ say("bene, sono contenta per te"), -hear("ottimamente") ]
     +hear("bene") >> [ say("sono contenta per te"), -hear("bene") ]

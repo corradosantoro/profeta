@@ -116,6 +116,7 @@ class ThreadedEngineExecutor(AbstractEngineExecutor,threading.Thread):
             # if there are applicable plans, allocate them
             if len(applicable_plans) is not 0:
                 trigger = self.engine.allocate_plans(applicable_plans)
+                print trigger, applicable_plans
                 self.engine.execute_intentions(trigger)
             #else, execute the next intention
             else:
