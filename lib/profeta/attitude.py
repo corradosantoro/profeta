@@ -10,7 +10,7 @@ from inference import *
 #Engine
 #from inference import Variable
 
-__all__ = ['Attitude', 'Belief', 'Reactor' ]
+__all__ = ['Attitude', 'Belief', 'SingletonBelief', 'Reactor', 'Goal' ]
 
 class Attitude(object):
 
@@ -27,7 +27,16 @@ class Attitude(object):
         #for i in range (0, len(args)):
         #    self._terms.append (args [i])
 
+    def is_event(self):
+        return False
+
+    def is_goal(self):
+        return False
+
     def only_reactive(self):
+        return False
+
+    def singleton(self):
         return False
 
     def get_terms(self):
@@ -118,6 +127,9 @@ class Attitude(object):
 
     def get_type(self):
         return self._type
+
+    def is_a_delete(self):
+        return self._type == "delete"
 
     def unify(self, uAnotherAttitude):
         """Template method used to unify two attitudes"""
@@ -371,39 +383,47 @@ class Belief(Attitude):
         return True
 
 
-# class Goal(Attitude):
+class Goal(Attitude):
 
-#     def __init__(self, *args, **kwargs):
-#         Attitude.__init__(self,*args, **kwargs)
-#         self._type = None
+    def __init__(self, *args, **kwargs):
+        Attitude.__init__(self,*args, **kwargs)
+        self._type = "add"  # the default event is "+"
 
-#     def __repr__(self):
-#         if len(self._terms) is not 0:
-#             repr_string = self.__class__.__name__ + "(" + \
-#                     reduce (lambda x,y : x + "," + y,
-#                             map (lambda x: repr(x), self._terms)) + \
-#                     ")"
-#         else:
-#             repr_string =  self.__class__.__name__ + "()"
-#         if self._type == "add":
-#             return "+~" + repr_string
-#         else:
-#             return "-~" + repr_string
+    def __repr__(self):
+        if len(self._terms) is not 0:
+            repr_string = self.__class__.__name__ + "(" + \
+                    reduce (lambda x,y : x + "," + y,
+                            map (lambda x: repr(x), self._terms)) + \
+                    ")"
+        else:
+            repr_string =  self.__class__.__name__ + "()"
+        if self._type == "add":
+            return "+~" + repr_string
+        else:
+            return "-~" + repr_string
 
-#     def set_origin(self, uIntention):
-#         self._originating_intention = uIntention
+    def is_goal(self):
+        return True
 
-#     def __invert__ (self):
-#         return self
+    def set_origin(self, uIntention):
+        self._originating_intention = uIntention
 
-#     def create_event(self):
-#         if self._type == "add":
-#             return AddedGoalEvent(self)
-#         elif self._type == "delete":
-#             return DeletedGoalEvent(self)
-#         else:
-#             raise GoalEventTypeNotDefined()
+    def __invert__ (self):
+        return self
 
+    def create_event(self):
+        if self._type == "add":
+            return AddedGoalEvent(self)
+        elif self._type == "delete":
+            return DeletedGoalEvent(self)
+        else:
+            raise GoalEventTypeNotDefined()
+
+
+class SingletonBelief(Belief):
+
+    def singleton(self):
+        return True
 
 
 class Reactor(Belief):

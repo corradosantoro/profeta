@@ -9,6 +9,7 @@ import time
 import types
 import random
 import logging
+import Queue
 
 from profeta.exception import *
 #import logger
@@ -17,6 +18,7 @@ from profeta.variable import *
 from profeta.action import *
 from profeta.profeta_globals import *
 from profeta.attitude import *
+from profeta.event import *
 
 class KnowledgeBase(object):
 
@@ -30,13 +32,19 @@ class KnowledgeBase(object):
     def add_belief (self, uBelief):
         if not (uBelief.is_ground ()):
             raise NotGroundBelief (repr (uBelief))
-        if not (self.exists (uBelief)):
-            #set belief type to None
+        if uBelief.singleton():
+            self.delete_belief_by_name(uBelief)
             uBelief.set_type(None)
             self.__kb.append (uBelief)
             return True
         else:
-            return False
+            if not (self.exists (uBelief)):
+                #set belief type to None
+                uBelief.set_type(None)
+                self.__kb.append (uBelief)
+                return True
+            else:
+                return False
 
     def delete_belief_by_name(self, uBelief):
         for b in self.__kb:
@@ -139,6 +147,79 @@ class KnowledgeBase(object):
             return selected_bel
 
 
+class VersatileQueue(Queue.Queue):
+
+    NORMAL_PUT = 0
+    TOP_PUT = 1
+
+    def _put (self, item):
+        (data, mode) = item
+        if mode == VersatileQueue.TOP_PUT:
+            self.queue.appendleft(data)
+        else:
+            self.queue.append(data)
+
+    # put the event at queue tail
+    def put_event(self, uEvent):
+        self._put ( (uEvent, VersatileQueue.NORMAL_PUT) )
+
+    # put the event at queue head (so, this will be the first event to be dequeued)
+    def put_top_event(self, uEvent):
+        self._put ( (uEvent, VersatileQueue.TOP_PUT) )
+
+
+
+class Intention:
+
+    def __init__(self, uEngine, uOriginatingEvent, uContext, uBody, uPriority = 0):
+        self.__engine = uEngine
+        self.__event = uOriginatingEvent
+        self.__context = uContext
+        self.__body = uBody
+        self.__priority = uPriority
+
+    def __repr__(self):
+        return "%s >> %s" % (repr(self.__event), repr(self.__body))
+
+
+    def get_originating_event(self):
+        return self.__event
+
+
+    def step(self):
+        #print self.__body
+        if self.__body == []:
+            return False
+        else:
+            action_to_perform = self.__body[0]
+            self.__body = self.__body[1:]
+
+            self.__engine.set_context(self.__context)
+            eval_globals = self.__engine.prepare_local_eval_context()
+            #print action_to_perform.__class__
+            #print eval_globals
+            #print "---------------------"
+            if isinstance(action_to_perform, Action):
+                if PROFETA_LOGGING_ON:
+                    self.__engine.get_logger().debug("Executing: " + repr(action_to_perform))
+                eval_globals['__act'] = action_to_perform
+                eval ("__act.run()", eval_globals)
+            # if the selected action is the addition/deletion of a belief/goal:
+            elif type(action_to_perform) == types.StringType:
+                exec action_to_perform in eval_globals
+            else:
+                self.__engine.generate_internal_event(action_to_perform, None) #intention)
+                #print action_to_perform#, eval_globals
+            self.__engine.copy_to_context_from_globals(eval_globals)
+            self.__context = self.__engine.context()
+            return True
+
+
+    def execute_all(self):
+        while self.step():
+            pass
+
+
 class Engine(object):
 
     __instance = None
@@ -168,6 +249,8 @@ class Engine(object):
         self.__current_declared_episode = None
 
         self.__intentions = []
+        self.__channel = VersatileQueue()
+
         self.__executor = None
         self.debug = False
         if PROFETA_LOGGING_ON:
@@ -185,6 +268,9 @@ class Engine(object):
     @classmethod
     def kb(cls):
         return cls.__kb
+
+    def get_logger(self):
+        return self.__logger
 
     def get_scheduler_tick(self):
         return self.__scheduler_tick
@@ -242,7 +328,7 @@ class Engine(object):
 
 
     def plans_from_cache (self, uAttitude):
-        classname = uAttitude.__class__.__name__
+        classname = uAttitude.__class__.__name__  + "." + uAttitude.get_type() + "."
         if self.__plan_cache.has_key(classname):
             plans = map(lambda x: self.__plans[x], self.__plan_cache [classname])
         else:
@@ -290,15 +376,15 @@ class Engine(object):
         self.__executor = uExecutor
 
     def put_event (self, uEvent):
-        self.__executor.put_event( uEvent)
+        self.__channel.put_event( uEvent)
 
     def put_top_event (self, uEvent):
-        self.__executor.put_top_event( uEvent)
+        self.__channel.put_top_event( uEvent)
 
     def add_plan (self, uPriority, uAttitude, uCondition, uBody):
         self.__plans.append( (uPriority, uAttitude, uCondition, uBody) )
         plan_index = len(self.__plans) - 1
-        classname = uAttitude.__class__.__name__
+        classname = uAttitude.__class__.__name__ + "." + uAttitude.get_type() + "."
         if self.__current_declared_episode is None:
             key = classname
         else:
@@ -311,11 +397,45 @@ class Engine(object):
             self.__plan_cache[key] = [ plan_index ]
 
 
+    def fail_current_goal(self):
+        # determine current goal
+        stack = []
+        while self.__intentions != []:
+            top = self.__intentions[0]
+            evt = top.get_originating_event()
+            if evt.is_goal():
+                # the originating event is a goal, thus you can generate the goal failure event
+                self.__intentions = self.__intentions[1:] # remove failed intention
+                if not(evt.is_a_delete()):
+                    fail_event = - evt
+                    plan = self.plans_from_cache(fail_event)
+                    # print fail_event, plan
+                    if plan is not None:
+                        # a plan is found
+                        self.generate_internal_event(fail_event, None)
+                        return
+                    else:
+                        stack.append(fail_event)
+            else:
+                # the originating event is NOT a goal, thus remove current intention
+                self.__intentions = self.__intentions[1:] # remove failed intention
+                print "Intention stopped due to a goal fail event: ", top
+                break
+
+        print "No goal failure catching plan for events: ", stack
+
+
     def pop_intention(self):
         return self.__intentions.pop()
 
-    def push_intention(self, uPlan):
-        self.__intentions.append(uPlan)
+
+    def push_intention(self, uInt):
+        self.__intentions.append(uInt)
+
+
+    def push_intention_as_first(self, uInt):
+        self.__intentions.insert(0, uInt)
+
 
     def prepare_local_eval_context (self):
         eval_globals = self.__eval_globals.copy()
@@ -323,15 +443,46 @@ class Engine(object):
             eval_globals['__builtins__'][key] = value
         return eval_globals
 
-    def process_event (self, uEvent):
+
+    def copy_to_context_from_globals(self, eval_globals):
+        for (key, val) in eval_globals.items():
+            if key != '__builtins__':
+                #print "CTX", key, val
+                self.__context[key] = val
+
+
+    def execute(self):
+        if self.__intentions != []:
+            # if there are intentions to execute, execute one of it
+            self.execute_one_intention()
+            return
+
+        if self.__channel.empty():
+            for poller in self.get_pollers():
+                event = poller.poll()
+                if event is not None:
+                    if event.is_event() or event.get_type() is not None:
+                        self.generate_external_event(event)
+                    else:
+                        self.add_belief(event)
+
+        if not(self.__channel.empty()):
+            event = self.__channel.get()
+            relevant_plans =  self.evaluate_plans_from_event(event)
+            applicable_plans = self.evaluate_conditions(relevant_plans)
+            self.select_plan(applicable_plans)
+
+
+
+    def evaluate_plans_from_event(self, uEvent):
         if PROFETA_LOGGING_ON:
             self.__logger.debug("Processing  " + repr(uEvent) )
 
-        relevant_plans = []
-        #for (priority, trigger,condition,body) in self.__plans:
         candidate_plans = self.plans_from_cache (uEvent.get_attitude())
         if candidate_plans is None:
-            return relevant_plans
+            return []  # no plans
+
+        relevant_plans = []
         for (priority, trigger,condition,body) in candidate_plans:
             # make a copy of the trigger
             c_trigger = copy.deepcopy(trigger)
@@ -352,12 +503,11 @@ class Engine(object):
         self.clear_context()
         if PROFETA_LOGGING_ON:
             self.__logger.debug("Found  " + repr(len(relevant_plans)) + "  RELEVANT plans for  " + repr(uEvent))
-#         for (trigger, condition, body, context) in relevant_plans:
-#             self.__logger.debug("(%s,%s)", body, context)
+        #print relevant_plans
         return  relevant_plans
 
 
-    def evaluate_condition(self, uRelevantPlans):
+    def evaluate_conditions(self, uRelevantPlans):
         if PROFETA_LOGGING_ON:
             self.__logger.debug("Evaluating Condition for all Relevant Plans...")
         applicable_plans = []
@@ -375,130 +525,63 @@ class Engine(object):
         del uRelevantPlans ## would be cause of bugs?
         return applicable_plans
 
-    def allocate_plans(self, uApplicablePlans):
+
+
+    def select_plan(self, uApplicablePlans):
         if PROFETA_LOGGING_ON:
             self.__logger.debug("Allocating Plans...")
-        for plan in uApplicablePlans:
-            (priority, trigger, condition, body, context) = plan
-            # if the trigger event is an external event, it has no origin associated
-            # so, the plan has to be allocated as a new intention
-            if trigger.get_origin() is None:
-                if PROFETA_LOGGING_ON:
-                    self.__logger.debug("External event: creating new Intention...")
-                # Insert applicable plans in the Intentions stack ordered by
-                # priority. 0 is the lowest priority
-                #self.__intentions.insert(priority, [(priority, body, context)] )
-                #self.__logger.debug("Intentions is: " + repr(self.__intentions))
-                pr_index = 0
-                intention_added = 0
-                # Currently there are no intention
-                if len(self.__intentions) is 0:
-                    self.__intentions.append( [(priority, body, context)] )
-                else:
-                    # Insert intention according to priorities
-                    for intention in self.__intentions:
-                        # The empty intention may be used for pushing other
-                        # plans
-                        if len(intention) is not 0:
-                            # Every Intention has the template:[(priority, body, context)]
-                            intention_item = intention[0]
-                            ( curr_pr, curr_body, curr_ctx) = intention_item
-                            if priority > curr_pr:
-                                pr_index+=1
-                                continue
-                            self.__intentions.insert(pr_index, [(priority, body, context)])
-                            intention_added = 1
-                            break
-                    # The plan has the highest priority
-                    if intention_added is 0:
-                            self.__intentions.append([(priority, body, context)])
-            # else, if the triggering event was an internal event, the associated plan
-            # has to be allocated on the top of the originating intention
+
+        if uApplicablePlans != []:
+            # select first plan
+            (priority, trigger, condition, body, context) = uApplicablePlans[0]
+
+            if trigger.is_goal():
+                #print "GOAL: ", trigger
+                self.push_intention_as_first( Intention(self, trigger, context, body, priority) )
             else:
-                if PROFETA_LOGGING_ON:
-                    self.__logger.debug("Internal event: pushing body in " + repr(trigger.get_origin()))
-                # The pushed plan inherit the priority of the containing plan
-                trigger.get_origin().insert(0,(priority,body,context))
-                if PROFETA_LOGGING_ON:
-                    self.__logger.debug("Intentions is: " +
-                                        repr(self.__intentions))
-        return trigger
+                #print "OTHER: ", trigger
+                self.push_intention( Intention(self, trigger, context, body, priority) )
 
-    def execute_intentions (self, trigger = None):
+
+    def execute_one_intention(self):
         """ Selects an intention from self.__intentions and executes it."""
-        # Check for empty intentions and remove them
-        for intention in self.__intentions:
-            if len(intention) is 0:
-                if PROFETA_LOGGING_ON:
-                    self.__logger.debug("Removing empty intention: %s" , intention)
-                self.__intentions.remove(intention)
-                #print "REMOVED : ", self.__intentions
-                if PROFETA_LOGGING_ON:
-                    self.__logger.debug("New list of intentions: %s ", self.__intentions)
 
-        #if there're no intentions to execute
-        if len(self.__intentions) is 0:
-            #print "There are no intentions : ",
-            #print self.__intentions
-            #is an exception suitable here?
-            return
+        #print self.__intentions
 
-        # now the select the next intention to execute
-        # if no applicable plans were found
-        if trigger is None:
-            intention = self.__intentions[-1]
-        # else if a plan has been triggered by an external event
-        elif trigger.get_origin() is None:
-            intention = self.__intentions[-1]
-        # else if a plan has been triggered by an external event
-        else:
-            intention = trigger.get_origin()
+        # get first intention of the list
+        intention = self.__intentions[0]
+        if not(intention.step()):
+            # if no more actions in the intention, remove it from queue
+            self.__intentions = self.__intentions[1:]
 
-        top_of_intention = intention[0]
+        """
+        top_of_intention = intention
         (priority, body, context) = top_of_intention
         self.__context = context.copy()
         if self.debug:
             print "Executing ", body  , " with context ", context
 
-        if len(body) is not 0:
-            if PROFETA_LOGGING_ON:
-                self.__logger.debug("Old list of intentions: %s ", self.__intentions)
-            action_to_perform = body[0]
-            body.remove(action_to_perform)
+        if body != []:
+            eval_globals = self.prepare_local_eval_context()
+            for action_to_perform in body:
+                #print action_to_perform.__class__
+                #print eval_globals
+                #print "---------------------"
+                if isinstance(action_to_perform, Action):
+                    if PROFETA_LOGGING_ON:
+                        self.__logger.debug("Executing: " + repr(action_to_perform))
+                    eval_globals['__act'] = action_to_perform
+                    eval ("__act.run()", eval_globals)
+                # if the selected action is the addition/deletion of a belief/goal:
+                elif type(action_to_perform) == types.StringType:
+                    exec action_to_perform in eval_globals
+                else:
+                    self.generate_internal_event(action_to_perform, None) #intention)
+                #print action_to_perform#, eval_globals
+                self.copy_to_context_from_globals(eval_globals)
+        """
+        return True
 
-            # if the selected action is an object of class Action:
-            if isinstance(action_to_perform, Action):
-                if PROFETA_LOGGING_ON:
-                    self.__logger.debug("Executing: " + repr(action_to_perform))
-                eval_globals = self.prepare_local_eval_context()
-                eval_globals['__act'] = action_to_perform
-                eval ("__act.run()", eval_globals)
-                # If an Action is the last element of the body, remove the
-                # entire body
-                for intention in self.__intentions:
-                    if len(intention) is 0:
-                        if PROFETA_LOGGING_ON:
-                            self.__logger.debug("Removing empty intention: %s" , intention)
-                        self.__intentions.remove(intention)
-                        if PROFETA_LOGGING_ON:
-                            self.__logger.debug("New list of intentions: %s ", self.__intentions)
-
-
-            # if the selected action is the addition/deletion of a belief/goal:
-            else:
-                self.generate_internal_event(action_to_perform, intention)
-
-            # if there're no more action to perform in this plan:
-            if len(body) is 0:
-                if PROFETA_LOGGING_ON:
-                    self.__logger.debug("Plan completed! Removing it from the stack...")
-                    self.__logger.debug("Removing: %s from intention %s" , top_of_intention, intention)
-                intention.remove(top_of_intention)
-                if PROFETA_LOGGING_ON:
-                    self.__logger.debug("New list of intentions: %s ", self.__intentions)
-        else:
-            if PROFETA_LOGGING_ON:
-                self.__logger.debug("Warning: empty plan into self.__intentions")
 
     def intentions (self):
         return self.__intentions
@@ -542,6 +625,7 @@ class Engine(object):
         return self.__context.has_key (uVarName)
 
     def get_context_var(self, uVarName):
+        #print uVarName, self.__context[uVarName]
         return self.__context[uVarName]
 
     def set_context_var(self, uVarName, uVarValue):
@@ -580,11 +664,12 @@ class Engine(object):
         # pass values to the new event
         uAttitude = copy.copy(Attitude)
         list_of_terms = uAttitude.get_terms()
-        list_of_values = list_of_terms
-        if len(list_of_terms) is not 0:
-            if (isinstance(list_of_terms[0], Variable)):
-                list_of_values = map ( lambda x : x.get(),
-                                       list_of_terms)
+        list_of_values = []
+        for v in list_of_terms:
+            if (isinstance(v, Variable)):
+                list_of_values.append(v.get())
+            else:
+                list_of_values.append(v)
 
         uAttitude.set_terms(list_of_values)
 

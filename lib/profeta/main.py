@@ -12,17 +12,27 @@ class PROFETA:
 
     __thread = None
     __engine = None
+    __ticks = None
+    __is_running = True
 
     @classmethod
-    def start(cls, ticks = 10, debug = False ):
+    def start(cls, ticks = 0, debug = False ):
+        cls.__is_running = True
         cls.__engine = CreateEngine(ticks)
         cls.__engine.set_debug (debug)
-        cls.__thread = ThreadedEngineExecutor (Engine.instance())
+        cls.__ticks = ticks / 1000.0
+        #cls.__thread = ThreadedEngineExecutor (Engine.instance())
         #cls.__thread.start ()
 
     @classmethod
+    def stop(cls):
+        cls.__is_running = False
+
+    @classmethod
     def run(cls):
-        cls.__thread.run()
+        while cls.__is_running:
+            cls.__engine.execute()
+            time.sleep(cls.__ticks)
 
     @classmethod
     def kb(cls):
@@ -34,6 +44,13 @@ class PROFETA:
             cls.__engine.generate_external_event(+b)
         else:
             raise "Not a belief or reactor"
+
+    @classmethod
+    def achieve(cls, g):
+        if isinstance(g, Goal):
+            cls.__engine.generate_external_event(+g)
+        else:
+            raise "Not a Goal"
 
     @classmethod
     def add_sensor(cls, sensor):

@@ -12,6 +12,12 @@ class Event(object):
     def __init__ (self, uAttitude):
         self._attitude = uAttitude
 
+    def is_event(self):
+        return True
+
+    def is_goal(self):
+        return self._attitude.is_goal()
+
     def execute(self):
         pass
 
@@ -23,6 +29,7 @@ class Event(object):
 
     def unify(self, trigger):
         return self._attitude.unify (trigger)
+
 
 
 class AddedBeliefEvent(Event):

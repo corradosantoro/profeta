@@ -6,6 +6,8 @@ condition.py
 
 from profeta.inference import *
 
+import sys
+import traceback
 import copy
 import types
 
@@ -56,8 +58,13 @@ class Condition(object):
                 if type(condition_term) == types.FunctionType:
                     eval_globals = Engine.instance().prepare_local_eval_context()
                     eval_globals["__fun"] = condition_term
-                    fun_status = eval ("__fun()", eval_globals)
-                    matching_result = fun_status
+                    try:
+                        fun_status = eval ("__fun()", eval_globals)
+                        matching_result = fun_status
+                    except:
+                        print "WARNING!! Unexpected error in condition evaluation:", sys.exc_info()[0]
+                        traceback.print_exc()
+                        matching_result = False
                     if matching_result:
                         new_matching_beliefs.append ( (belief_list, ctx) )
 

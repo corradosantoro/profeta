@@ -15,6 +15,7 @@ class AsyncSensorProxy(Sensor):
         self.__sensor = uSyncSensor
         self.__queue = Queue.Queue(1)
         self.__thread = threading.Thread(target = self.run)
+        self.__thread.setDaemon(True)
 
     # PROFETA context
     def start(self):

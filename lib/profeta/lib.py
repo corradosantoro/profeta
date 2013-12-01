@@ -50,6 +50,26 @@ class nop(Action):
 
 
 # ------------------------------------------------------------------------------
+class fail(Action):
+
+    def execute(self):
+        Engine.instance().fail_current_goal()
+
+
+# ------------------------------------------------------------------------------
+class show(Action):
+
+    def execute(self):
+        print self[0],
+
+
+# ------------------------------------------------------------------------------
+class show_line(Action):
+
+    def execute(self):
+        print self[0]
+
+# ------------------------------------------------------------------------------
 class OneShotPoller:
 
     def __init__ (self, uAutoRearm = False):
