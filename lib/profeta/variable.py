@@ -68,7 +68,7 @@ def make_terms(term_list):
         v = t
         if type(t) == types.StringType:
             if len(t) > 0:
-                if (t[0] >= 'A') and (t[0] <= 'Z'):
+                if ((t[0] >= 'A') and (t[0] <= 'Z')) or (t == '_'):
                     v = Variable(t)
         r.append (v)
     return r

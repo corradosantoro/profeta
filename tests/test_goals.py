@@ -66,9 +66,10 @@ class failure_action(Action):
 
 
 def strategy():
-    +start() >> [ show("ciao!"), g1(), show("end") ]
+    +start() >> [ show("ciao!"), g1("xxcall"), show("end") ]
 
-    g1() >> [ show("this is the goal 'G1'"), g2(), show("after calling 'g2'") ]
+    g1("call") >> [ show("this is the goal 'G1'"), g2(), show("after calling 'g2'") ]
+    g1("_") >> [ show("this is the goal 'G1'") ]
     g2() >> [ show("this is the goal 'G2'"), g3(), show("after calling 'g3'") ]
     g3() >> [ show("this is the goal 'G3'") , failure_action() ]
 

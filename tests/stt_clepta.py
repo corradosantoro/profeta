@@ -19,18 +19,8 @@ from profeta.clepta.google import *
 
 
 
-# ------------------------------------------------------------------------------
-# {{{ The Actions
-# ------------------------------------------------------------------------------
-class show(Action):
-
-    def execute(self):
-        print self[0]
-
-
-
 def strategy():
-    +start() >> [ show("ciao!"), say("ciao")  ]
+    +start() >> [ show_line("ciao!"), say("ciao")  ]
     +hear("ciao") >> [ say("ciao anche a te!"), -hear("ciao") ]
     +hear("ciao come stai") >> [ say("abbastanza bene, e tu?"), -hear("come stai") ]
     +hear("come stai") >> [ say("abbastanza bene, e tu?"), -hear("come stai") ]
