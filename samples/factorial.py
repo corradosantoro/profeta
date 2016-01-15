@@ -2,8 +2,8 @@
 #
 #
 
-import sys
-sys.path.append ("../lib")
+#import sys
+#sys.path.append ("../lib")
 
 from profeta.lib  import *
 from profeta.main import *
