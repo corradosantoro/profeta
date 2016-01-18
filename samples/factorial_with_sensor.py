@@ -12,8 +12,13 @@ from profeta.main import *
 class fact(Reactor):
     pass
 
+class KB(Sensor):
+    def sense(self):
+        e = raw_input ("Enter Number: ")
+        return +fact(int(e), 1)
+
+
 def factorial():
-    +fact("N") >> [ +fact(1, "N") ]
     +fact(1, "X") >> [ show("the resuilting factorial is "), show_line("X") ]
     +fact("N", "X") >> [ "Y = int(N) * int(X)", "N = int(N) - 1", +fact("N", "Y") ]
 
@@ -21,10 +26,9 @@ def factorial():
 if __name__ == "__main__":
 
     PROFETA.start()
+    PROFETA.add_sensor(KB())
 
     factorial()
 
-    print "Enter +fact(N) to calculate the factorial of N"
-
-    PROFETA.run_shell(globals())
+    PROFETA.run()
 
