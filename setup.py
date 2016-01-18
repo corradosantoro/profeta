@@ -8,6 +8,7 @@ setup(name='PROFETA',
       author='Corrado Santoro',
       author_email='santoro@dmi.unict.it',
       url='http://github.com/corradosantoro/profeta',
-      packages=['profeta'],
-      package_dir={'profeta': 'lib/profeta'}
+      packages=['profeta', 'profeta.clepta'],
+      package_dir={'profeta': 'lib/profeta',
+                   'profeta.clepta' : 'lib/profeta/clepta'}
 )
