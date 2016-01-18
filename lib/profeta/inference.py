@@ -477,6 +477,8 @@ class Engine(object):
     def evaluate_plans_from_event(self, uEvent):
         if PROFETA_LOGGING_ON:
             self.__logger.debug("Processing  " + repr(uEvent) )
+        if self.debug:
+            print "EVENT: " + repr(uEvent)
 
         candidate_plans = self.plans_from_cache (uEvent.get_attitude())
         if candidate_plans is None:
@@ -504,6 +506,8 @@ class Engine(object):
         if PROFETA_LOGGING_ON:
             self.__logger.debug("Found  " + repr(len(relevant_plans)) + "  RELEVANT plans for  " + repr(uEvent))
         #print relevant_plans
+        if self.debug:
+            print "FOUND: " + repr(len(relevant_plans)) + "  RELEVANT plans for  " + repr(uEvent)
         return  relevant_plans
 
 
@@ -532,6 +536,10 @@ class Engine(object):
             self.__logger.debug("Allocating Plans...")
 
         if uApplicablePlans != []:
+
+            if self.debug:
+                print "SELECTED: Plan " + repr(uApplicablePlans[0])
+
             # select first plan
             (priority, trigger, condition, body, context) = uApplicablePlans[0]
 

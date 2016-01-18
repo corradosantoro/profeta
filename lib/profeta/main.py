@@ -28,6 +28,10 @@ class PROFETA:
         #cls.__thread.start ()
 
     @classmethod
+    def set_debug(cls, debug):
+        cls.__engine.set_debug(debug)
+
+    @classmethod
     def stop(cls):
         cls.__is_running = False
 
@@ -96,6 +100,8 @@ class SHELL(threading.Thread):
                 s = "assert " + s[1:]
             if s[0] == '-':
                 s = "retract " + s[1:]
+            if s[0] == '~':
+                s = "achieve " + s[1:]
             args = s.split()
             cmd = "C_" + args[0]
             if not(hasattr(self,cmd)):
@@ -106,11 +112,13 @@ class SHELL(threading.Thread):
 
     def C_help(self, args):
         print "assert B           asserts a belief"
-        print "+ B                asserts a belief"
+        print "+B                 asserts a belief"
         print "retract B          retract a belief"
-        print "- B                retract a belief"
+        print "-B                 retract a belief"
         print "achieve G          achieves a goal"
+        print "~G                 achieves a goal"
         print "kb                 prints the knowledge base"
+        print "verbose on|off     sets the verbosity on or off"
         print "help               shows help"
         print "quit               quits PROFETA"
 
@@ -125,6 +133,9 @@ class SHELL(threading.Thread):
 
 
     def C_assert(self, args):
+        if len(args) == 0:
+            print "assert: missing belief"
+            return
         try:
             B = eval(args[0], self.__globals)
             PROFETA.assert_belief(B)
@@ -133,6 +144,9 @@ class SHELL(threading.Thread):
 
 
     def C_retract(self, args):
+        if len(args) == 0:
+            print "retract: missing belief"
+            return
         try:
             B = eval(args[0], self.__globals)
             PROFETA.retract_belief(B)
@@ -141,6 +155,9 @@ class SHELL(threading.Thread):
 
 
     def C_achieve(self, args):
+        if len(args) == 0:
+            print "achieve: missing goal"
+            return
         try:
             G = eval(args[0], self.__globals)
             PROFETA.achieve(G)
@@ -148,3 +165,13 @@ class SHELL(threading.Thread):
             print "Unexpected error in ACHIEVE:", sys.exc_info()[0]
 
 
+    def C_verbose(self, args):
+        if len(args) == 0:
+            print "verbose: missing parameter"
+            return
+        if args[0] == "on":
+            PROFETA.set_debug(True)
+        elif args[0] == "off":
+            PROFETA.set_debug(False)
+        else:
+            print "verbose: invalid parameter"
