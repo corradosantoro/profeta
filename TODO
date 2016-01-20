@@ -1,8 +1,0 @@
-
-* Fix scheduling of intentions
-* Support variables in the form:
-
-  X = Variable()
-
-  bel(X) -> [ action(X) ]
-
