@@ -30,8 +30,12 @@ class GoogleTextToSpeech(HttpService):
         self.__lang = lang
 
     def say(self, uUtterance):
-        res = self.invoke({"User-Agent": "Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.63"},
-                          urllib.urlencode({"q": uUtterance, "textlen": len(uUtterance), "tl": self.__lang}))
+        res = self.invoke({"User-Agent": "Mozilla/5.0 (X11; Linux i686) AppleWebKit/535.7 (KHTML, like Gecko) Chrome/16.0.912.63",
+                           "Referer" : "http://translate.google.com" },
+                          urllib.urlencode({"q": uUtterance,
+                                            "textlen": len(uUtterance),
+                                            "tl": self.__lang,
+                                            "ie" : 'UTF-8' }))
         if res.getcode() == 200:
             f = open(GoogleTextToSpeech.TEMPFILE, "wb")
             f.write(res.read())

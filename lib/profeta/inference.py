@@ -80,13 +80,16 @@ class KnowledgeBase(object):
 
 
     def beliefs_like (self, uBel, uContext = {}):
+        #print "$$$ Finding beliefs like ", uBel
         choices = []
         for b in self.__kb:
+            #print "$$$ Selected", b
             Engine.instance().push_context(True)
-            Engine.instance().set_context(uContext)
-            if b.unify (uBel):
+            Engine.instance().set_context(copy.deepcopy(uContext))
+            if b.unify(uBel):
                 choices.append ( (b, Engine.instance().context()) )
             Engine.instance().pop_context()
+        #print "$$$", choices
         return choices
 
     def one_belief (self):
@@ -508,6 +511,8 @@ class Engine(object):
         #print relevant_plans
         if self.debug:
             print "FOUND: " + repr(len(relevant_plans)) + "  RELEVANT plans for  " + repr(uEvent)
+            #for p in relevant_plans:
+            #    print p
         return  relevant_plans
 
 
@@ -522,6 +527,8 @@ class Engine(object):
 
             if condition.evaluate():
                 applicable_plans.append((priority, trigger, condition, body, copy.deepcopy(self.__context)))
+                if self.debug:
+                    print "CONDITION TRUE for PLAN: ", relevant_plan
 
         if PROFETA_LOGGING_ON:
             self.__logger.debug("Found  " + repr(len(applicable_plans)) + "  APPLICABLE plans")

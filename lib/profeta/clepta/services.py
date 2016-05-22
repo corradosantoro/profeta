@@ -3,6 +3,7 @@
 #
 
 import urllib2
+import traceback
 
 class Service:
 
@@ -44,6 +45,7 @@ class HttpService(Service):
             p = urllib2.urlopen(req)
             return p
         except urllib2.HTTPError as e:
-            print "HTTPError " + e.strerror
+            traceback.print_exc()
+            print "HTTPError " + repr(e)
             return None
 

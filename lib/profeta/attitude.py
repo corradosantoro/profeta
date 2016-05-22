@@ -182,6 +182,7 @@ class Attitude(object):
         other_terms = uAnotherAttitude.get_terms ()
         # Compare every term of the attitude  with the term
         # of the current trigger
+        #print "COMPARING", self_terms, other_terms
         for i in range(0, len(self_terms)):
             a = self_terms[i]
             b = other_terms[i]
