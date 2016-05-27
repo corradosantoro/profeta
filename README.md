@@ -24,6 +24,6 @@ The PROFETA shell will be displayed. Now enter e.g.
 
 The program will compute the factorial of 10 and will show:
 
-  the resuilting factorial is  10
+  the resuilting factorial is  3628800
 
 
