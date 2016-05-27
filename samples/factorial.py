@@ -13,7 +13,7 @@ class fact(Reactor):
     pass
 
 def factorial():
-    +fact("N") >> [ +fact(1, "N") ]
+    +fact("N") >> [ +fact("N", 1) ]
     +fact(1, "X") >> [ show("the resulting factorial is "), show_line("X") ]
     +fact("N", "X") >> [ "Y = int(N) * int(X)", "N = int(N) - 1", +fact("N", "Y") ]
 
