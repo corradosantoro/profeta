@@ -59,15 +59,38 @@ class fail(Action):
 # ------------------------------------------------------------------------------
 class show(Action):
 
+    FIND_BEGIN_MARK = 0
+    FIND_END_MARK = 0
+
+    def do_print(self, s):
+        state = show.FIND_BEGIN_MARK
+        for idx in range(0, len(s)):
+            if state == show.FIND_BEGIN_MARK:
+                if s[idx] == '?':
+                    s_marker = idx
+                    state = show.FIND_END_MARK
+                else:
+                    print s[idx],
+            elif state == state.FIND_END_MARK:
+                if s[idx] == '?':
+                    print '?',
+                    state = show.FIND_BEGIN_MARK
+                if not(s[idx].isalnum()):
+                    e_marker = idx
+                    varname = s[s_marker:e_marker]
+
     def execute(self):
-        print self[0],
+        for i in range(0, self.items()):
+            print self[i],
 
 
 # ------------------------------------------------------------------------------
 class show_line(Action):
 
     def execute(self):
-        print self[0]
+        for i in range(0, self.items()):
+            print self[i],
+        print
 
 # ------------------------------------------------------------------------------
 class OneShotPoller:
