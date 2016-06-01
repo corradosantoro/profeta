@@ -186,6 +186,12 @@ class Robot(MovableObject):
         self.__command_queue.append ( (self.check_distance, uDistance) )
 
 
+    def forward_to_point(self, uX, uY):
+        self.__command_queue.append ( (self.init_rotation_point, (uX, uY)) )
+        self.__command_queue.append ( (self.check_target_relative_angle, 0) )
+        self.__command_queue.append ( (self.init_distance_point, (uX, uY)) )
+        self.__command_queue.append ( (self.check_distance, 0) )
+
     def move(self):
         MovableObject.move(self)
         if self.__command_queue != []:
@@ -245,5 +251,23 @@ class Robot(MovableObject):
 
     def check_target_relative_angle(self, uTarget):
         return self.check_target_angle(self.__target_angle)
+
+    def init_rotation_point(self, uPos):
+        (uX, uY) = uPos
+        self.__starting_position = self.get_position()
+        (x, y) = self.__starting_position
+        point_heading = math.degrees(math.atan2(uY - y, uX - x))
+        self.__target_angle = self.normalize_angle(point_heading - self.get_theta())
+        return True
+
+    def init_distance_point(self, uPos):
+        (uX, uY) = uPos
+        self.__starting_position = self.get_position()
+        (x, y) = self.__starting_position
+        distance = math.hypot(y - uY, x - uX)
+        (meth, param) = self.__command_queue[1]
+        self.__command_queue[1] = (meth, distance)
+        self.__target_position = (uX, uY)
+        return True
 
 

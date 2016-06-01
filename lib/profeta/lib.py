@@ -136,7 +136,8 @@ class RepetitivePoller(OneShotPoller):
 # ------------------------------------------------------------------------------
 class Sensor:
 
-    def __init__(self):
+    def __init__(self, do_start = True):
+        self.__initial_on = do_start
         self.__is_on = None
 
     def on(self):
@@ -155,7 +156,8 @@ class Sensor:
         return self.__is_on
 
     def prepare(self):
-        self.on()
+        if self.__initial_on:
+            self.on()
         self.start()
 
     def poll(self):
@@ -177,3 +179,24 @@ class Sensor:
         pass
 
 
+# ------------------------------------------------------------------------------
+class sensor_on(Action):
+
+    def execute(self):
+        s = self[0]
+        for p in Engine.instance().get_pollers():
+            if isinstance(p, s):
+                p.on()
+
+
+# ------------------------------------------------------------------------------
+class sensor_off(Action):
+
+    def execute(self):
+        s = self[0]
+        for p in Engine.instance().get_pollers():
+            if isinstance(p, s):
+                p.off()
+
+
+# ------------------------------------------------------------------------------

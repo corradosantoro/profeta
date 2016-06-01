@@ -70,6 +70,11 @@ class forward(Action):
         ENV.get_robot().forward_to_distance(self[0])
 
 
+class go_to(Action):
+    def execute(self):
+        ENV.get_robot().forward_to_point(self[0], self[1])
+
+
 class rotate_to(Action):
     def execute(self):
         ENV.get_robot().rotate_absolute(self[0])
@@ -84,6 +89,7 @@ class SimulationStep(Sensor):
 
     def sense(self):
         ENV.step() # execute one step of simulation
+        time.sleep(0.1)
         return None
 
 class TargetSensor(Sensor):
@@ -111,7 +117,9 @@ class PositionSensor(Sensor):
         ENV.step() # execute one step of simulation
         p = ENV.get_robot().get_position()
         th = ENV.get_robot().get_theta()
-        return position(p[0], p[1], th)
+        bel = position(p[0], p[1], th)
+        print bel
+        return bel
 
 
 # ------------------------------------------------------------------------------
@@ -137,9 +145,12 @@ if __name__ == "__main__":
     ENV = Environment( (2000,2000) )
     #ENV.add_fixed_object(FixedObject( (100, 500), 100 ))
 
-    robot = Robot( (100, 100) , 100, 0)
-    robot.set_rotation_speed(3.5) # 2 degrees/step
-    robot.set_linear_speed(7.3) # 5 mm/step
+    robot = Robot( (100, 100) , 80, 0)
+    # initial position 100,100
+    # radius of the robot 80
+    # initial orientation 0
+    robot.set_rotation_speed(2) # 2 degrees/step
+    robot.set_linear_speed(5) # 5 mm/step
     ENV.add_robot(robot)
 
     PROFETA.start()
