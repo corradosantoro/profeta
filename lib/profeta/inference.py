@@ -463,6 +463,7 @@ class Engine(object):
         while self.__intentions != []:
             top = self.__intentions[0]
             evt = top.get_originating_event()
+            #print evt
             if evt.is_goal():
                 # the originating event is a goal, thus you can generate the goal failure event
                 self.__intentions = self.__intentions[1:] # remove failed intention

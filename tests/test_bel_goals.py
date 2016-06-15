@@ -19,41 +19,20 @@ from profeta.clepta.sensor  import *
 # ------------------------------------------------------------------------------
 # {{{ The Beliefs
 # ------------------------------------------------------------------------------
-class phrase(Belief):
-    pass
-
-class fact_result(Belief):
+class bel(Belief):
     pass
 
 # ------------------------------------------------------------------------------
 # }}}
 
 
-class fact(Goal):
-    pass
-
-
 class g1(Goal):
     pass
-
-
-class g2(Goal):
-    pass
-
-
-class g3(Goal):
-    pass
-
 
 
 # ------------------------------------------------------------------------------
 # {{{ The Actions
 # ------------------------------------------------------------------------------
-class show(Action):
-
-    def execute(self):
-        print self[0]
-
 
 class failure_action(Action):
 
@@ -66,16 +45,12 @@ class failure_action(Action):
 
 
 def strategy():
-    +start() >> [ show_line("ciao!"), g1("call"), show_line("end") ]
+    +start() >> [ show_line("ciao!"), +bel("one"), g1(), show_line("end of start plan") ]
 
-    g1("call") >> [ show_line("this is the goal 'G1'"), g2(), show_line("after calling 'g2'") ]
-    g1("_") >> [ show_line("this is the goal 'G1'") ]
-    g2() >> [ show_line("this is the goal 'G2'"), g3(), show_line("after calling 'g3'") ]
-    g3() >> [ show_line("this is the goal 'G3'") , failure_action() ]
+    g1() >> [ +bel("two"), show_line("this is the goal 'G1'") ]
 
-    -g3() >> [ show_line("plan G3 failed"), fail() ]
-    -g2() >> [ show_line("plan G2 failed"), fail() ]
-    -g1("_") >> [ show_line("plan G1 failed"), fail() ]
+    +bel("one") >> [ show_line("after bel one"), -bel("one") ]
+    +bel("two") >> [ show_line("after bel two"), -bel("two") ]
 
 
 
