@@ -15,7 +15,6 @@ class PROFETA:
 
     __thread = None
     __engine = None
-    __ticks = None
     __is_running = True
 
     @classmethod
@@ -23,9 +22,6 @@ class PROFETA:
         cls.__is_running = True
         cls.__engine = CreateEngine(ticks)
         cls.__engine.set_debug (debug)
-        cls.__ticks = ticks / 1000.0
-        #cls.__thread = ThreadedEngineExecutor (Engine.instance())
-        #cls.__thread.start ()
 
     @classmethod
     def set_debug(cls, debug):
@@ -33,22 +29,20 @@ class PROFETA:
 
     @classmethod
     def stop(cls):
+        cls.__engine.put_top_event(None)
         cls.__is_running = False
 
     @classmethod
     def run(cls):
         while cls.__is_running:
             cls.__engine.execute()
-            time.sleep(cls.__ticks)
 
     @classmethod
     def run_shell(cls, g):
         sh = SHELL(g)
         sh.start()
-        cls.__ticks = 0.001
         while cls.__is_running:
             cls.__engine.execute()
-            time.sleep(cls.__ticks)
 
     @classmethod
     def kb(cls):

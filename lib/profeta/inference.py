@@ -10,6 +10,7 @@ import types
 import random
 import logging
 import Queue
+import threading
 
 from profeta.exception import *
 #import logger
@@ -150,7 +151,7 @@ class KnowledgeBase(object):
             return selected_bel
 
 
-class VersatileQueue(Queue.Queue):
+class VersatileQueueFake(Queue.Queue):
 
     NORMAL_PUT = 0
     TOP_PUT = 1
@@ -170,6 +171,62 @@ class VersatileQueue(Queue.Queue):
     def put_top_event(self, uEvent):
         self._put ( (uEvent, VersatileQueue.TOP_PUT) )
 
+
+
+class VersatileQueue:
+
+    def __init__(self):
+        self.__c = threading.Condition()
+        self.__data = []
+        self.__size = 0
+
+    # put the event at queue tail
+    def put_event(self, uEvent):
+        self.__c.acquire()
+        self.__data.append(uEvent)
+        self.__size += 1
+        self.__c.notify()
+        self.__c.release()
+
+    # put the event at queue head (so, this will be the first event to be dequeued)
+    def put_top_event(self, uEvent):
+        self.__c.acquire()
+        self.__data.insert(0, uEvent)
+        self.__size += 1
+        self.__c.notify()
+        self.__c.release()
+
+    def get(self):
+        self.__c.acquire()
+        while self.__size == 0:
+            self.__c.wait()
+        item = self.__data.pop(0)
+        self.__size -= 1
+        self.__c.release()
+        return item
+
+    def wait_item(self):
+        self.__c.acquire()
+        while self.__size == 0:
+            self.__c.wait()
+        self.__c.release()
+
+    def empty(self):
+        self.__c.acquire()
+        retval = self.__size == 0
+        self.__c.release()
+        return retval
+
+    def has_a_top_goal(self):
+        self.__c.acquire()
+        if self.__size == 0:
+            retval = False
+        else:
+            item = self.__data[0]
+            s = item.__class__.__name__
+            retval = s == "AddedGoalEvent" or s == "DeletedGoalEvent"
+        self.__c.release()
+        return retval
 
 
 class Intention:
@@ -458,19 +515,29 @@ class Engine(object):
         if self.__intentions != []:
             # if there are intentions to execute, execute one of it
             self.execute_one_intention()
-            return
+            # if, after step execution, a goal is found on the top of the event queue
+            # do not return and let the system to process it
+            if not(self.__channel.has_a_top_goal()):
+                return
 
         if self.__channel.empty():
-            for poller in self.get_pollers():
-                event = poller.poll()
-                if event is not None:
-                    if event.is_event() or event.get_type() is not None:
-                        self.generate_external_event(event)
-                    else:
-                        self.add_belief(event)
+            #time.sleep(self.__scheduler_tick)
+            pollers = self.get_pollers()
+            if pollers == []:
+                self.__channel.wait_item()
+            else:
+                for poller in self.get_pollers():
+                    event = poller.poll()
+                    if event is not None:
+                        if event.is_event() or event.get_type() is not None:
+                            self.generate_external_event(event)
+                        else:
+                            self.add_belief(event)
 
         if not(self.__channel.empty()):
             event = self.__channel.get()
+            if event is None:
+                return
             relevant_plans =  self.evaluate_plans_from_event(event)
             applicable_plans = self.evaluate_conditions(relevant_plans)
             self.select_plan(applicable_plans)
@@ -568,35 +635,6 @@ class Engine(object):
         if not(intention.step()):
             # if no more actions in the intention, remove it from queue
             self.__intentions = self.__intentions[1:]
-
-        """
-        top_of_intention = intention
-        (priority, body, context) = top_of_intention
-        self.__context = context.copy()
-        if self.debug:
-            print "Executing ", body  , " with context ", context
-
-        if body != []:
-            eval_globals = self.prepare_local_eval_context()
-            for action_to_perform in body:
-                #print action_to_perform.__class__
-                #print eval_globals
-                #print "---------------------"
-                if isinstance(action_to_perform, Action):
-                    if PROFETA_LOGGING_ON:
-                        self.__logger.debug("Executing: " + repr(action_to_perform))
-                    eval_globals['__act'] = action_to_perform
-                    eval ("__act.run()", eval_globals)
-                # if the selected action is the addition/deletion of a belief/goal:
-                elif type(action_to_perform) == types.StringType:
-                    exec action_to_perform in eval_globals
-                else:
-                    self.generate_internal_event(action_to_perform, None) #intention)
-                #print action_to_perform#, eval_globals
-                self.copy_to_context_from_globals(eval_globals)
-        """
-        return True
-
 
     def intentions (self):
         return self.__intentions

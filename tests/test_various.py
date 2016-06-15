@@ -56,7 +56,7 @@ class show(Action):
 class KB(Sensor):
 
     def sense(self):
-        print "KB is:", PROFETA.kb()
+        #print "KB is:", PROFETA.kb()
         e = raw_input ("Enter Phrase: ")
         if e == "stop":
             PROFETA.stop()
@@ -67,17 +67,17 @@ class KB(Sensor):
 
 
 def strategy():
-    +start() >> [ show("ciao!") ]
-    +phrase("one") >> [ show("the triggered rule is one"), -phrase("one"), g1(),g2() ]
-    +phrase("ciao") >> [ show("ciao ciao!") ]
-    +phrase("X") / (lambda : (int(X) > 20)) >> [ show("rule X > 20"), "Y = int(X) - 1", show("Y"), -phrase("X") ]
+    +start() >> [ show_line("ciao!") ]
+    +phrase("one") >> [ show_line("the triggered rule is one"), -phrase("one"), g1(),g2() ]
+    +phrase("ciao") >> [ show_line("ciao ciao!"), -phrase("ciao") ]
+    +phrase("X") / (lambda : (int(X) > 20)) >> [ show_line("rule X > 20"), "Y = int(X) - 1", show("Y"), -phrase("X") ]
     +phrase("X") >> [ fact("X"), -phrase("X") ]
 
-    g1() >> [ show("this is the goal 'G1'"), +phrase("ciao") ]
-    g2() >> [ show("this is the goal 'G2'") ]
+    g1() >> [ show_line("this is the goal 'G1'"), +phrase("ciao") ]
+    g2() >> [ show_line("this is the goal 'G2'") ]
 
     fact("X") >> [ fact("X", 1) ]
-    fact("X", "N") / (lambda : int(X) == 0) >> [ show("N") ]
+    fact("X", "N") / (lambda : int(X) == 0) >> [ show_line("N") ]
     fact("X", "N") >> [ "N1 = int(N) * int(X)", "X1 = int(X) - 1", fact("X1", "N1") ]
 
 

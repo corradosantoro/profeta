@@ -66,7 +66,7 @@ class failure_action(Action):
 
 
 def strategy():
-    +start() >> [ show("ciao!"), g1("xxcall"), show("end") ]
+    +start() >> [ show("ciao!"), g1("call"), show("end") ]
 
     g1("call") >> [ show("this is the goal 'G1'"), g2(), show("after calling 'g2'") ]
     g1("_") >> [ show("this is the goal 'G1'") ]
@@ -88,5 +88,5 @@ if __name__ == "__main__":
 
     strategy()
 
-    PROFETA.run()
+    PROFETA.run_shell(globals())
 
