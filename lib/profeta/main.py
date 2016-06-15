@@ -45,6 +45,7 @@ class PROFETA:
     def run_shell(cls, g):
         sh = SHELL(g)
         sh.start()
+        cls.__ticks = 0.001
         while cls.__is_running:
             cls.__engine.execute()
             time.sleep(cls.__ticks)
