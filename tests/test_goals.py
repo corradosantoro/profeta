@@ -13,7 +13,6 @@ from profeta.inference  import *
 from profeta.action  import *
 from profeta.lib  import *
 from profeta.main import *
-from profeta.clepta.sensor  import *
 
 
 # ------------------------------------------------------------------------------
