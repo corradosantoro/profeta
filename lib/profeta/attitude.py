@@ -137,6 +137,8 @@ class Attitude(object):
             return False
         if not self.do_check_event_type(uAnotherAttitude):
             return False
+        if self.check_parameters_all(uAnotherAttitude):
+            return True
         if not self.do_check_number_of_terms(uAnotherAttitude):
             return False
         return (self.do_compare_attitude_values_with_trigger_terms(uAnotherAttitude) or
@@ -158,6 +160,15 @@ class Attitude(object):
         if self._type == uAnotherAttitude._type:
             return True
         return False
+
+    # check if uAnotherAttitude (which is a template) has a unique parameter
+    # which is "*": its a wild card indicating 'any number of parameters'
+    def check_parameters_all(self,uAnotherAttitude):
+        other_terms = uAnotherAttitude.get_terms()
+        if (len(other_terms) == 1) and other_terms[0] == "*":
+            return True
+        else:
+            return False
 
     def do_check_number_of_terms(self, uAnotherAttitude):
         """Check if the list of terms of two attitudes have the same size."""
