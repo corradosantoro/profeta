@@ -25,6 +25,9 @@ def declare_episode(uEpisodeName):
 def context(uGoalName):
     declare_episode(uGoalName)
 
+def stage(uGoalName):
+    declare_episode(uGoalName)
+
 # ------------------------------------------------------------------------------
 class start_episode(Action):
 
@@ -39,6 +42,11 @@ class start_episode(Action):
 
 # ------------------------------------------------------------------------------
 class set_context(start_episode):
+    pass
+
+
+# ------------------------------------------------------------------------------
+class set_stage(start_episode):
     pass
 
 

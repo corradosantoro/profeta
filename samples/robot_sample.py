@@ -126,13 +126,13 @@ class PositionSensor(Sensor):
 # {{{ The Strategy
 # ------------------------------------------------------------------------------
 def strategy():
-    go() >> [ show_line("starting the robot!"), set_context("first_step") ]
+    go() >> [ show_line("starting the robot!"), set_stage("first_step") ]
 
-    context("first_step")
+    stage("first_step")
     +start() >> [ rotate_to(45), forward(500) ]
-    +target_got() >> [ show_robot_position(), set_context("hexagone") ]
+    +target_got() >> [ show_robot_position(), set_stage("hexagone") ]
 
-    context("hexagone")
+    stage("hexagone")
     +start() >> [ +hexagone_point(0), do_hexagone() ]
     do_hexagone() / hexagone_point(0) >> [ rotate_to(0), forward(300) ]
     do_hexagone() / hexagone_point(6) >> [ stop() ]
