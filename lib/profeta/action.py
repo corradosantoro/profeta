@@ -27,6 +27,11 @@ class Action:
         else:
             return v
 
+    def __setitem__ (self, uIndex, uVal):
+        v = self._terms[uIndex]
+        if isinstance(v, Variable):
+            v.set(uVal)
+
     def items(self):
         return len(self._terms)
 
